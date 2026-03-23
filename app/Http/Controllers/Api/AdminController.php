@@ -35,13 +35,12 @@ class AdminController extends Controller
 
             return response()->json([
                 'status' => true,
-                'code' => 200,
+                'code' => 201,
                 'message' => 'Staff created successfully',
                 'staff' => $staff,
-            ], 200);
+            ], 201);
 
         } catch (\Throwable $e) {
-
             DB::rollBack();
             Log::error($e);
 
@@ -49,106 +48,100 @@ class AdminController extends Controller
                 'status' => false,
                 'code' => 500,
                 'message' => 'Something went wrong',
-                'error' => $e->getMessage(),
             ], 500);
         }
     }
 
-   public function listUsers(): JsonResponse
-{
-    try {
+    public function listUsers(): JsonResponse
+    {
+        try {
+            $users = User::where('role', Role::STAFF)->latest()->get();
 
-        $users = User::where('role', Role::STAFF)->get();
+            return response()->json([
+                'status' => true,
+                'code' => 200,
+                'message' => 'Staff data retrieved successfully',
+                'data' => $users
+            ], 200);
 
-        return response()->json([
-            'status' => true,
-            'code' => 200,
-            'message' => 'Staff data retrieved successfully',
-            'data' => $users
-        ], 200);
+        } catch (\Throwable $e) {
+            Log::error($e);
 
-    } catch (\Throwable $e) {
-
-        Log::error($e);
-
-        return response()->json([
-            'status' => false,
-            'code' => 500,
-            'message' => 'Something went wrong',
-            'error' => $e->getMessage(),
-        ], 500);
-    }
-}
-
-public function getStaff($id):JsonResponse
-{
-    try{
-
-    $user = User::with('role',Role::STAFF)->get();
-    if($user){
-        return response()->json([
-            'status'=>false,
-            'code'=> 100,
-            'message'=>'user not found'
-        ],100);
-    }
-
-    return response()->json([
-        'status'=>true,
-        'code'=>200,
-        'message'=>'Data retrived successful',
-        'user'=> $user,
-    ],100);
-
-    }
-    catch(\Throwable $e){
-        Log::error($e);
-
-        return response()->json([
-            'status'=>false,
-            'code'=>100,
-            'message'=>'something went wrong',
-            'error' => $e->getMessage(),
-        ],100);
-    }
-}
-
-public function deleteStaff($id):JsonResponse
-{
-    try{
-
-    $user = User::find($id);
-
-
-        if (!$user || $user->role != Role::STAFF) {
             return response()->json([
                 'status' => false,
-                'code' => 404,
-                'message' => 'Staff not found'
-            ], 404);
+                'code' => 500,
+                'message' => 'Something went wrong',
+            ], 500);
         }
-
-         $user->delete();
-
-        return response()->json([
-            'status' => true,
-            'code' => 200,
-            'message' => 'Staff deleted successfully'
-        ], 200);
-
-
-
     }
-     catch(\Throwable $e){
-        Log::error($e);
 
-        return response()->json([
-            'status'=>false,
-            'code'=>100,
-            'message'=>'something went wrong',
-            'error' => $e->getMessage(),
-        ],100);
+    public function getStaff($id): JsonResponse
+    {
+        try {
+            $user = User::where('id', $id)
+                        ->where('role', Role::STAFF)
+                        ->first();
+
+            if (!$user) {
+                return response()->json([
+                    'status' => false,
+                    'code' => 404,
+                    'message' => 'Staff not found'
+                ], 404);
+            }
+
+            return response()->json([
+                'status' => true,
+                'code' => 200,
+                'message' => 'Data retrieved successfully',
+                'user' => $user,
+            ], 200);
+
+        } catch (\Throwable $e) {
+            Log::error($e);
+
+            return response()->json([
+                'status' => false,
+                'code' => 500,
+                'message' => 'Something went wrong',
+            ], 500);
+        }
     }
-}
 
+    public function deleteStaff($id): JsonResponse
+    {
+        try {
+            DB::beginTransaction();
+
+            $user = User::find($id);
+
+            if (!$user || $user->role != Role::STAFF) {
+                return response()->json([
+                    'status' => false,
+                    'code' => 404,
+                    'message' => 'Staff not found'
+                ], 404);
+            }
+
+            $user->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'status' => true,
+                'code' => 200,
+                'message' => 'Staff deleted successfully'
+            ], 200);
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error($e);
+
+            return response()->json([
+                'status' => false,
+                'code' => 500,
+                'message' => 'Something went wrong',
+            ], 500);
+        }
+    }
 }

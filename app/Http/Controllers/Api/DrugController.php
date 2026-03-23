@@ -7,6 +7,7 @@ use App\Models\Drug;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DrugController extends Controller
 {
@@ -15,7 +16,7 @@ class DrugController extends Controller
         try {
             DB::beginTransaction();
 
-            $request->validate([
+            $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'quantity' => 'required|integer|min:0',
@@ -23,7 +24,8 @@ class DrugController extends Controller
                 'expiry_date' => 'nullable|date',
             ]);
 
-            $drug = Drug::create($request->all());
+            $drug = Drug::create($validated);
+
             DB::commit();
 
             return response()->json([
@@ -34,32 +36,27 @@ class DrugController extends Controller
             ], 201);
 
         } catch (\Throwable $e) {
-
-            DB::rollback();
+            DB::rollBack();
             Log::error($e);
 
             return response()->json([
                 'status' => false,
-                'code' => 401,
+                'code' => 500,
                 'message' => 'Something went wrong',
-                'error' => $e->getMessage(),
-
-            ], 401);
-
+            ], 500);
         }
     }
 
     public function listDrugs(): JsonResponse
     {
         try {
-
-            $drugs = Drug::all();
+            $drugs = Drug::latest()->get();
 
             return response()->json([
                 'status' => true,
                 'code' => 200,
+                'message' => 'Drugs data fetched successfully',
                 'drugs' => $drugs,
-                'message' => 'Drugs data fetched successful',
             ], 200);
 
         } catch (\Throwable $e) {
@@ -67,20 +64,18 @@ class DrugController extends Controller
 
             return response()->json([
                 'status' => false,
-                'code' => 401,
+                'code' => 500,
                 'message' => 'Something went wrong',
-                'error' => $e->getMessage(),
-            ], 401);
+            ], 500);
         }
     }
 
     public function viewDrug($id): JsonResponse
     {
         try {
-
             $drug = Drug::find($id);
 
-            if (! $drug) {
+            if (!$drug) {
                 return response()->json([
                     'status' => false,
                     'code' => 404,
@@ -91,7 +86,8 @@ class DrugController extends Controller
             return response()->json([
                 'status' => true,
                 'code' => 200,
-                'message' => 'Drug fetched successful',
+                'message' => 'Drug fetched successfully',
+                'drug' => $drug,
             ], 200);
 
         } catch (\Throwable $e) {
@@ -99,10 +95,9 @@ class DrugController extends Controller
 
             return response()->json([
                 'status' => false,
-                'code' => 401,
+                'code' => 500,
                 'message' => 'Something went wrong',
-                'error' => $e->getMessage(),
-            ], 401);
+            ], 500);
         }
     }
 
@@ -110,9 +105,10 @@ class DrugController extends Controller
     {
         try {
             DB::beginTransaction();
+
             $drug = Drug::find($id);
 
-            if (! $drug) {
+            if (!$drug) {
                 return response()->json([
                     'status' => false,
                     'code' => 404,
@@ -120,34 +116,34 @@ class DrugController extends Controller
                 ], 404);
             }
 
-            $request->validate([
+            $validated = $request->validate([
                 'name' => 'sometimes|required|string|max:255',
-                'description' => ' sometimes|string',
+                'description' => 'nullable|string',
                 'quantity' => 'sometimes|required|integer|min:0',
-                'price+per_unit' => 'sometimes|rquired|numeric|min:0',
+                'price_per_unit' => 'sometimes|required|numeric|min:0',
                 'expiry_date' => 'nullable|date',
             ]);
 
-            $drug->update($request->all());
+            $drug->update($validated);
+
             DB::commit();
 
             return response()->json([
-                'status' => false,
+                'status' => true,
                 'code' => 200,
-                'message' => 'Drug updated successful',
+                'message' => 'Drug updated successfully',
                 'drug' => $drug,
             ], 200);
 
         } catch (\Throwable $e) {
-            DB::rollback();
+            DB::rollBack();
             Log::error($e);
 
             return response()->json([
                 'status' => false,
-                'code' => 100,
+                'code' => 500,
                 'message' => 'Something went wrong',
-                'error' => $e->getMessage(),
-            ], 100);
+            ], 500);
         }
     }
 
@@ -156,7 +152,7 @@ class DrugController extends Controller
         try {
             $drug = Drug::find($id);
 
-            if (! $drug) {
+            if (!$drug) {
                 return response()->json([
                     'status' => false,
                     'code' => 404,
@@ -170,18 +166,17 @@ class DrugController extends Controller
             return response()->json([
                 'status' => true,
                 'code' => 200,
-                'message' => 'drug susupnded successful',
+                'message' => 'Drug suspended successfully',
             ], 200);
 
         } catch (\Throwable $e) {
             Log::error($e);
 
             return response()->json([
-                'status' => true,
-                'code' => 100,
+                'status' => false,
+                'code' => 500,
                 'message' => 'Something went wrong',
-                'error' => $e->getMessage(),
-            ], 100);
+            ], 500);
         }
     }
 
@@ -189,17 +184,19 @@ class DrugController extends Controller
     {
         try {
             DB::beginTransaction();
+
             $drug = Drug::find($id);
 
-            if (! $drug) {
+            if (!$drug) {
                 return response()->json([
                     'status' => false,
-                    'code' => 401,
+                    'code' => 404,
                     'message' => 'Drug not found',
-                ], 401);
+                ], 404);
             }
 
             $drug->delete();
+
             DB::commit();
 
             return response()->json([
@@ -209,64 +206,62 @@ class DrugController extends Controller
             ], 200);
 
         } catch (\Throwable $e) {
-            DB::rollback();
+            DB::rollBack();
             Log::error($e);
 
             return response()->json([
                 'status' => false,
-                'code' => 100,
+                'code' => 500,
                 'message' => 'Something went wrong',
-                'error' => $e->getMessage(),
-            ], 100);
+            ], 500);
         }
     }
 
     public function adjustStock(Request $request, $id): JsonResponse
     {
-        try{
+        try {
             DB::beginTransaction();
 
-            $request->validate([
-                'quantity'=> 'required|integer',
+            $validated = $request->validate([
+                'quantity' => 'required|integer',
             ]);
 
             $drug = Drug::find($id);
 
-            if(!$drug){
+            if (!$drug) {
                 return response()->json([
-                    'status'=>false,
-                    'code'=>404,
-                    'message'=> 'Drug not found'
-                ],404);
+                    'status' => false,
+                    'code' => 404,
+                    'message' => 'Drug not found',
+                ], 404);
             }
 
-            $drug->quantity += $request->quantity;
-            if($drug->quantity < 0 )
-                $drug->quantity =0 ;
+            $drug->quantity += $validated['quantity'];
 
-            $drug ->save();
+            if ($drug->quantity < 0) {
+                $drug->quantity = 0;
+            }
+
+            $drug->save();
+
             DB::commit();
 
             return response()->json([
-                'status'=>false,
-                'code'=>200,
-                'message'=>'Stock ajustested successful',
+                'status' => true,
+                'code' => 200,
+                'message' => 'Stock adjusted successfully',
                 'drug' => $drug,
-            ],200);
+            ], 200);
 
-        }
-
-        catch(\Throwable $e){
-            DB::rollback();
+        } catch (\Throwable $e) {
+            DB::rollBack();
             Log::error($e);
 
             return response()->json([
-                'status'=>false,
-                'code'=>100,
-                'message'=>'Something went wrong',
-                'error' => $e->getMessage(),
-            ],100);
+                'status' => false,
+                'code' => 500,
+                'message' => 'Something went wrong',
+            ], 500);
         }
     }
-
 }
