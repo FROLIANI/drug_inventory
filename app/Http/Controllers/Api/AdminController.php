@@ -49,6 +49,7 @@ class AdminController extends Controller
                 'status' => false,
                 'code' => 500,
                 'message' => 'Something went wrong',
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -74,6 +75,7 @@ class AdminController extends Controller
             'status' => false,
             'code' => 500,
             'message' => 'Something went wrong',
+            'error' => $e->getMessage(),
         ], 500);
     }
 }
