@@ -8,9 +8,10 @@ class Role extends Model
 {
     const ADMIN = 1;
 
-    const STAFF= 2;
+    const STAFF = 2;
 
-    public function user(){
+    public function user()
+    {
         return $this->hasMany(User::class);
     }
 }

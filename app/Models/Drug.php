@@ -2,23 +2,23 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 
 class Drug extends Model
 {
     use HasFactory;
 
-    protected $fillable =[
-    'name',
-    'description',
-    'quantity',
-    'price_per_unit',
-    'expiry_date',
-    'status',
+    protected $fillable = [
+        'name',
+        'description',
+        'quantity',
+        'price_per_unit',
+        'expiry_date',
+        'status',
     ];
 
-     protected $casts = [
+    protected $casts = [
         'expiry_date' => 'date',
         'quantity' => 'integer',
         'price_per_unit' => 'decimal:2',
