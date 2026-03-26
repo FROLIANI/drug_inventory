@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Drug;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class DrugController extends Controller
@@ -14,7 +13,6 @@ class DrugController extends Controller
     public function addDrug(Request $request): JsonResponse
     {
         try {
-            DB::beginTransaction();
 
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
@@ -26,7 +24,6 @@ class DrugController extends Controller
 
             $drug = Drug::create($validated);
 
-            DB::commit();
 
             return response()->json([
                 'status' => true,
@@ -36,7 +33,6 @@ class DrugController extends Controller
             ], 201);
 
         } catch (\Throwable $e) {
-            DB::rollBack();
             Log::error($e);
 
             return response()->json([
@@ -104,7 +100,6 @@ class DrugController extends Controller
     public function editDrug(Request $request, $id): JsonResponse
     {
         try {
-            DB::beginTransaction();
 
             $drug = Drug::find($id);
 
@@ -126,8 +121,6 @@ class DrugController extends Controller
 
             $drug->update($validated);
 
-            DB::commit();
-
             return response()->json([
                 'status' => true,
                 'code' => 200,
@@ -136,7 +129,6 @@ class DrugController extends Controller
             ], 200);
 
         } catch (\Throwable $e) {
-            DB::rollBack();
             Log::error($e);
 
             return response()->json([
@@ -183,7 +175,6 @@ class DrugController extends Controller
     public function deleteDrug($id): JsonResponse
     {
         try {
-            DB::beginTransaction();
 
             $drug = Drug::find($id);
 
@@ -197,7 +188,6 @@ class DrugController extends Controller
 
             $drug->delete();
 
-            DB::commit();
 
             return response()->json([
                 'status' => true,
@@ -206,7 +196,6 @@ class DrugController extends Controller
             ], 200);
 
         } catch (\Throwable $e) {
-            DB::rollBack();
             Log::error($e);
 
             return response()->json([
@@ -220,7 +209,6 @@ class DrugController extends Controller
     public function adjustStock(Request $request, $id): JsonResponse
     {
         try {
-            DB::beginTransaction();
 
             $validated = $request->validate([
                 'quantity' => 'required|integer',
@@ -244,7 +232,7 @@ class DrugController extends Controller
 
             $drug->save();
 
-            DB::commit();
+
 
             return response()->json([
                 'status' => true,
@@ -254,7 +242,6 @@ class DrugController extends Controller
             ], 200);
 
         } catch (\Throwable $e) {
-            DB::rollBack();
             Log::error($e);
 
             return response()->json([

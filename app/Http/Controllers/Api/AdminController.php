@@ -8,7 +8,6 @@ use Illuminate\Http\JsonResponse;
 use App\Models\User;
 use App\Models\Role;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class AdminController extends Controller
@@ -16,7 +15,7 @@ class AdminController extends Controller
     public function createStaff(Request $request): JsonResponse
     {
         try {
-            DB::beginTransaction();
+
 
             $data = $request->validate([
                 'name' => 'required|string|max:255',
@@ -31,7 +30,7 @@ class AdminController extends Controller
                 'role' => Role::STAFF
             ]);
 
-            DB::commit();
+
 
             return response()->json([
                 'status' => true,
@@ -41,7 +40,6 @@ class AdminController extends Controller
             ], 201);
 
         } catch (\Throwable $e) {
-            DB::rollBack();
             Log::error($e);
 
             return response()->json([
@@ -111,7 +109,6 @@ class AdminController extends Controller
     public function deleteStaff($id): JsonResponse
     {
         try {
-            DB::beginTransaction();
 
             $user = User::find($id);
 
@@ -125,7 +122,6 @@ class AdminController extends Controller
 
             $user->delete();
 
-            DB::commit();
 
             return response()->json([
                 'status' => true,
@@ -134,7 +130,6 @@ class AdminController extends Controller
             ], 200);
 
         } catch (\Throwable $e) {
-            DB::rollBack();
             Log::error($e);
 
             return response()->json([
